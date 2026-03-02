@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaam Premium Panel | Cloud Control</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --card: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--card);
+            backdrop-filter: blur(25px);
+            padding: 40px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header i.logo-icon {
+            font-size: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        h2 { font-weight: 800; margin: 0; font-size: 26px; }
+        .role-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid var(--primary);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .form-section { margin-bottom: 25px; }
+        h4 { font-size: 15px; margin-bottom: 15px; color: #cbd5e1; display: flex; align-items: center; gap: 10px; }
+        h4 i { color: var(--secondary); }
+
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; }
+        
+        input, select {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.5);
+            color: white;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus { border-color: var(--primary); background: rgba(15, 23, 42, 0.8); }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 15px;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+        .btn-success { background: var(--success); color: white; margin-top: 5px; }
+        .btn-primary:hover, .btn-success:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* Hasil Deploy Ber-Ikon */
+        #resultBox {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px dashed var(--success);
+            border-radius: 16px;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .res-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+        .res-label { color: #94a3b8; display: flex; align-items: center; gap: 8px; }
+        .res-value { font-weight: 700; color: var(--success); }
+        
+        code { 
+            background: #000; 
+            padding: 4px 10px; 
+            color: var(--warning); 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-family: monospace;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .logout-btn { background: transparent; color: var(--danger); border: none; width: 100%; margin-top: 25px; cursor: pointer; font-weight: 700; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="loginView">
+    <div class="header">
+        <i class="fa-solid fa-shield-halved logo-icon"></i>
+        <h2>Login Panel</h2>
+        <div class="role-badge">Secure Access</div>
+    </div>
+    <div class="input-group">
+        <i class="fa-solid fa-envelope"></i>
+        <input type="email" id="email" placeholder="Email Address">
+    </div>
+    <div class="input-group">
+        <i class="fa-solid fa-key"></i>
+        <input type="password" id="password" placeholder="Password">
+    </div>
+    <button class="btn btn-primary" onclick="handleLogin()">
+        <i class="fa-solid fa-right-to-bracket"></i> Masuk Ke Panel
+    </button>
+</div>
+
+<div class="container" id="dashboardView" style="display:none;">
+    <div class="header">
+        <i class="fa-solid fa-terminal logo-icon"></i>
+        <h2 id="roleHeader">Dashboard</h2>
+        <div id="roleBadge" class="role-badge">Loading...</div>
+    </div>
+
+    <div id="adminPanel" style="display:none; border-bottom: 1px solid var(--border); padding-bottom: 25px; margin-bottom: 25px;">
+        <h4><i class="fa-solid fa-user-gear"></i> Manajemen Member</h4>
+        <div class="input-group">
+            <i class="fa-solid fa-at"></i>
+            <input id="newEmail" placeholder="Member Email">
+        </div>
+        <div class="input-group">
+            <i class="fa-solid fa-lock"></i>
+            <input id="newPass" type="password" placeholder="Member Password">
+        </div>
+        <button class="btn btn-success" onclick="createMember()">
+            <i class="fa-solid fa-user-plus"></i> Daftarkan Akun
+        </button>
+    </div>
+
+    <div class="form-section">
+        <h4><i class="fa-solid fa-layer-group"></i> Konfigurasi Server</h4>
+        <div class="input-group">
+            <i class="fa-solid fa-server"></i>
+            <input id="srvName" placeholder="Nama Server (Contoh: web-api-01)">
+        </div>
+        <div class="input-group">
+            <i class="fa-solid fa-microchip"></i>
+            <select id="ram">
+                <optgroup label="Standard">
+                    <option value="1024">1 GB - Starter</option>
+                    <option value="2048">2 GB - Basic</option>
+                    <option value="4096">4 GB - Pro</option>
+                </optgroup>
+                <optgroup label="High Performance">
+                    <option value="6144">6 GB - Expert</option>
+                    <option value="8192">8 GB - Ultra</option>
+                    <option value="10240">10 GB - Beast</option>
+                </optgroup>
+                <option value="unlimited">∞ Unlimited Access</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" onclick="deployServer()">
+            <i class="fa-solid fa-rocket"></i> Launch Instance
+        </button>
+    </div>
+
+    <div id="resultBox">
+        <div style="text-align: center; color: var(--success); font-weight: 800; margin-bottom: 15px;">
+            <i class="fa-solid fa-circle-check"></i> SERVER BERHASIL AKTIF
+        </div>
+        <div class="res-item">
+            <span class="res-label"><i class="fa-solid fa-globe"></i> Hostname:</span>
+            <span class="res-value" id="resDomain">-</span>
+        </div>
+        <div class="res-item">
+            <span class="res-label"><i class="fa-solid fa-user-shield"></i> Username:</span>
+            <span class="res-value" id="resUser">-</span>
+        </div>
+        <div class="res-item">
+            <span class="res-label"><i class="fa-solid fa-key"></i> Password:</span>
+            <code id="resPass" onclick="copyPass()">-</code>
+        </div>
+        <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 10px;">*Klik pada password untuk menyalin</p>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">
+        <i class="fa-solid fa-power-off"></i> Logout Session
+    </button>
+</div>
+
+<script>
+    const API_URL = "/api";
+
+    // LOGIN LOGIC
+    async function handleLogin() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if(data.success) {
+                localStorage.setItem('role', data.role);
+                location.reload();
+            } else { Swal.fire('Error', 'Kredensial Salah!', 'error'); }
+        } catch (e) { Swal.fire('Error', 'Backend Offline', 'error'); }
+    }
+
+    // CHECK SESSION
+    const role = localStorage.getItem('role');
+    if(role) {
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('dashboardView').style.display = 'block';
+        document.getElementById('roleBadge').innerText = role + " Access";
+        document.getElementById('roleHeader').innerText = role.toUpperCase() + " PANEL";
+        if(role === 'admin') document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    // CREATE MEMBER (ADMIN)
+    async function createMember() {
+        const email = document.getElementById('newEmail').value;
+        const password = document.getElementById('newPass').value;
+        const res = await fetch(`${API_URL}/createMember`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if(data.success) Swal.fire('Success', 'Member Baru Terdaftar!', 'success');
+    }
+
+    // DEPLOY SERVER
+    async function deployServer() {
+        const name = document.getElementById('srvName').value;
+        const ram = document.getElementById('ram').value;
+
+        if(!name) return Swal.fire('Info', 'Isi Nama Server!', 'warning');
+
+        Swal.fire({ title: 'Deploying...', didOpen: () => Swal.showLoading() });
+
+        try {
+            const res = await fetch(`${API_URL}/createServer`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: name, packageSize: ram })
+            });
+            const data = await res.json();
+
+            Swal.close();
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('resDomain').innerText = data.domain;
+            document.getElementById('resUser').innerText = data.username;
+            document.getElementById('resPass').innerText = data.password;
+        } catch (e) { Swal.fire('Error', 'Gagal Deploy', 'error'); }
+    }
+
+    function copyPass() {
+        const pass = document.getElementById('resPass').innerText;
+        navigator.clipboard.writeText(pass);
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copied!', showConfirmButton: false, timer: 1000 });
+    }
+
+    function logout() { localStorage.clear(); location.reload(); }
+</script>
+
+</body>
+</html>
