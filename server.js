@@ -22,12 +22,23 @@ function saveUsers(users) {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
+/* ================= RANDOM PASSWORD ================= */
+
+function generatePassword(length = 12) {
+    const chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+}
+
 /* ================= LOGIN ================= */
 
 app.post("/api/login", (req, res) => {
     const { email, password } = req.body;
 
-    // Admin
     if (
         email === process.env.ADMIN_EMAIL &&
         password === process.env.ADMIN_PASSWORD
@@ -35,9 +46,10 @@ app.post("/api/login", (req, res) => {
         return res.json({ success: true, role: "admin" });
     }
 
-    // Member
     const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = users.find(
+        (u) => u.email === email && u.password === password
+    );
 
     if (user) {
         return res.json({ success: true, role: "member" });
@@ -57,7 +69,7 @@ app.post("/api/createMember", (req, res) => {
 
     const users = getUsers();
 
-    if (users.find(u => u.email === email)) {
+    if (users.find((u) => u.email === email)) {
         return res.json({ success: false });
     }
 
@@ -67,7 +79,7 @@ app.post("/api/createMember", (req, res) => {
     return res.json({ success: true });
 });
 
-/* ================= CREATE SERVER ================= */
+/* ================= CREATE SERVER (AUTO PASSWORD) ================= */
 
 app.post("/api/createServer", async (req, res) => {
     const { username, packageSize } = req.body;
@@ -86,13 +98,19 @@ app.post("/api/createServer", async (req, res) => {
         cpuLimit = 0;
     } else {
         const gb = parseInt(packageSize);
-        memoryLimit = gb * 1024;  // RAM
-        diskLimit = gb * 1024;    // Disk
-        cpuLimit = gb * 100;      // CPU otomatis
+        memoryLimit = gb * 1024;
+        diskLimit = gb * 1024;
+        cpuLimit = gb * 100;
     }
 
     try {
-        // CREATE USER DI PTERODACTYL
+
+        /* ===== AUTO GENERATE PASSWORD ===== */
+
+        const randomPassword = generatePassword(14);
+
+        /* ===== CREATE USER DI PTERO ===== */
+
         const newUser = await axios.post(
             `${process.env.PTERO_URL}/api/application/users`,
             {
@@ -100,7 +118,7 @@ app.post("/api/createServer", async (req, res) => {
                 email: `${username}@panel.local`,
                 first_name: username,
                 last_name: "Server",
-                password: "Password123!"
+                password: randomPassword
             },
             {
                 headers: {
@@ -112,8 +130,9 @@ app.post("/api/createServer", async (req, res) => {
 
         const pteroUserId = newUser.data.attributes.id;
 
-        // CREATE SERVER
-        await axios.post(
+        /* ===== CREATE SERVER ===== */
+
+        const server = await axios.post(
             `${process.env.PTERO_URL}/api/application/servers`,
             {
                 name: username,
@@ -143,10 +162,46 @@ app.post("/api/createServer", async (req, res) => {
             }
         );
 
-        return res.json({ success: true });
+        const domain = process.env.PANEL_DOMAIN || "Not Set";
+
+        return res.json({
+            success: true,
+            domain: domain,
+            username: username,
+            password: randomPassword,
+            serverId: server.data.attributes.id
+        });
 
     } catch (err) {
         console.log(err.response?.data || err.message);
+
+        return res.json({
+            success: false,
+            message: "Gagal membuat server"
+        });
+    }
+});
+
+/* ================= START SERVER ================= */
+
+app.post("/api/startServer", async (req, res) => {
+    const { serverId } = req.body;
+
+    try {
+        await axios.post(
+            `${process.env.PTERO_URL}/api/client/servers/${serverId}/power`,
+            { signal: "start" },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.PTERO_PTLC}`,
+                    Accept: "Application/vnd.pterodactyl.v1+json"
+                }
+            }
+        );
+
+        return res.json({ success: true });
+
+    } catch (err) {
         return res.json({ success: false });
     }
 });
